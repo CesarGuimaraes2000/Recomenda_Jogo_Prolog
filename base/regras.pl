@@ -1,51 +1,74 @@
+% ==============================================================================
+% ARQUIVO DE REGRAS (LÓGICA DO SISTEMA)
+% ==============================================================================
+
 :- use_module(library(lists)).
 :- use_module(library(random)).
 
+% 1. Configurações Iniciais
 :- dynamic possui/2.
 
+% 2. Carregamento das Bases de Dados
+% (Mantidos para compatibilidade caso rode direto no Prolog, mas o app.py lida com isso)
 :- ensure_loaded('jogos_populares.pl').
 :- exists_file('biblioteca.pl') -> ensure_loaded('biblioteca.pl') ; true.
 
+% ==============================================================================
+% REGRA BÁSICA: DISPONIBILIDADE
+% ==============================================================================
 jogo_disponivel(ID, Nome, Preco, Modo, Tags) :-
     jogo(ID, Nome, Preco, Modo, Tags),
     \+ possui(ID, _).
 
-
-jogo_valido(ID, Nome, Preco, Modo, Tags, CatsDesejadas, PrecoMin, PrecoMax) :-
-    jogo_disponivel(ID, Nome, Preco, Modo, Tags),
-    
-    % Filtro de Preço
-    Preco >= PrecoMin,
-    Preco =< PrecoMax,
-    
-    % Filtro de Categorias (Rigoroso: deve ter TODAS)
-    contem_todas_categorias(CatsDesejadas, Tags).
+% ==============================================================================
+% REGRA PRINCIPAL: RECOMENDAÇÃO POR PONTUAÇÃO (SCORE)
+% ==============================================================================
+% 1. Filtra jogos por preço.
+% 2. Calcula Score = Quantas categorias o jogo tem em comum com o desejado.
+% 3. Ordena e retorna os Top 5.
 
 recomendar_top_5(CatsDesejadas, PrecoMin, PrecoMax, Top5Jogos) :-
-    % 1. Encontra TODOS os jogos que satisfazem a regra 'jogo_valido'
-    % O resultado é uma lista de termos: item(Nome, Preco, Modo, Tags)
     findall(
-        item(Nome, Preco, Modo, Tags),
-        jogo_valido(_, Nome, Preco, Modo, Tags, CatsDesejadas, PrecoMin, PrecoMax),
-        TodosJogos
+        par(Score, item(Nome, Preco, Modo, Tags)),
+        (
+            % Busca candidatos válidos
+            jogo_disponivel(_, Nome, Preco, Modo, Tags),
+            Preco >= PrecoMin, Preco =< PrecoMax,
+            
+            % Calcula pontuação (intersecção de categorias)
+            calcular_interseccao(CatsDesejadas, Tags, Score),
+            
+            % Opcional: Garante que tenha pelo menos 1 categoria em comum
+            Score > 0
+        ),
+        TodosCandidatos
     ),
     
-   
-    list_to_set(TodosJogos, JogosUnicos),
+    % Ordena a lista de pares baseando-se no Score (1º argumento do par)
+    % @>= significa ordem decrescente (maior score primeiro)
+    sort(1, @>=, TodosCandidatos, CandidatosOrdenados),
     
+    % Extrai apenas os dados do jogo, descartando o score auxiliar
+    extrair_itens(CandidatosOrdenados, ItensLimpos),
     
-    random_permutation(JogosUnicos, JogosEmbaralhados),
-    
-    
-    pegar_primeiros(5, JogosEmbaralhados, Top5Jogos).
+    % Pega os 5 primeiros
+    pegar_primeiros(5, ItensLimpos, Top5Jogos).
 
+% ==============================================================================
+% AUXILIARES
+% ==============================================================================
 
-contem_todas_categorias([], _).
-contem_todas_categorias([Cat|Resto], TagsJogo) :-
-    member(Cat, TagsJogo),
-    contem_todas_categorias(Resto, TagsJogo).
+% Calcula quantos elementos de Lista1 estão presentes em Lista2
+calcular_interseccao(Lista1, Lista2, Tamanho) :-
+    intersection(Lista1, Lista2, Interseccao),
+    length(Interseccao, Tamanho).
 
+% Transforma lista de [par(Score, Item), ...] em [Item, ...]
+extrair_itens([], []).
+extrair_itens([par(_, Item)|Resto], [Item|ItensResto]) :-
+    extrair_itens(Resto, ItensResto).
 
+% Pega os N primeiros elementos de uma lista
 pegar_primeiros(_, [], []).
 pegar_primeiros(0, _, []).
 pegar_primeiros(N, [H|T], [H|R]) :-

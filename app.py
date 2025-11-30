@@ -151,8 +151,8 @@ st.markdown("---")
 
 st.header("3. Orçamento")
 col1, col2 = st.columns(2)
-with col1: min_p = st.number_input("Mínimo (R$):", 0.0, step=10.0)
-with col2: max_p = st.number_input("Máximo (R$):", 200.0, step=10.0)
+with col1: min_p = st.number_input("Mínimo (R$):", min_value=0.0, value=0.0 ,step=10.0)
+with col2: max_p = st.number_input("Máximo (R$):", min_value=0.0, value=200.0, step=10.0)
 
 st.markdown("---")
 
