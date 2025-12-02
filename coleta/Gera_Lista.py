@@ -74,10 +74,6 @@ def get_api_details(app_id):
     except: return None
 
 def get_store_tags(app_id):
-    """
-    RASPAGEM DE DADOS: Pega as tags da comunidade direto da página da loja.
-    Isso retorna 'Soulslike', 'FPS', 'Rogue-like' que a API esconde.
-    """
     url = f"https://store.steampowered.com/app/{app_id}/?l=brazilian"
     try:
         res = requests.get(url, headers=HEADERS, cookies=COOKIES)
@@ -106,7 +102,6 @@ def main():
     count_validos = 0
     
     print(f"Coletando {LIMIT} jogos com Tags Precisas (HTML Parsing)...")
-    print("Nota: Isso é mais lento pois acessa a página da loja para ler tags da comunidade.")
 
     for i, app_id in enumerate(potential_ids):
         if count_validos >= LIMIT: break

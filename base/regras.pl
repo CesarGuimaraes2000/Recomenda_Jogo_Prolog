@@ -1,28 +1,26 @@
-% ==============================================================================
 % ARQUIVO DE REGRAS (LÓGICA DO SISTEMA)
-% ==============================================================================
 
 :- use_module(library(lists)).
 :- use_module(library(random)).
 
 % 1. Configurações Iniciais
+
 :- dynamic possui/2.
 
 % 2. Carregamento das Bases de Dados
-% (Mantidos para compatibilidade caso rode direto no Prolog, mas o app.py lida com isso)
+
 :- ensure_loaded('jogos_populares.pl').
 :- exists_file('biblioteca.pl') -> ensure_loaded('biblioteca.pl') ; true.
 
-% ==============================================================================
 % REGRA BÁSICA: DISPONIBILIDADE
-% ==============================================================================
+
 jogo_disponivel(ID, Nome, Preco, Modo, Tags) :-
     jogo(ID, Nome, Preco, Modo, Tags),
     \+ possui(ID, _).
 
-% ==============================================================================
+
 % REGRA PRINCIPAL: RECOMENDAÇÃO POR PONTUAÇÃO (SCORE)
-% ==============================================================================
+
 % 1. Filtra jogos por preço.
 % 2. Calcula Score = Quantas categorias o jogo tem em comum com o desejado.
 % 3. Ordena e retorna os Top 5.
@@ -38,14 +36,13 @@ recomendar_top_5(CatsDesejadas, PrecoMin, PrecoMax, Top5Jogos) :-
             % Calcula pontuação (intersecção de categorias)
             calcular_interseccao(CatsDesejadas, Tags, Score),
             
-            % Opcional: Garante que tenha pelo menos 1 categoria em comum
+            % Garante que tenha pelo menos 1 categoria em comum
             Score > 0
         ),
         TodosCandidatos
     ),
     
     % Ordena a lista de pares baseando-se no Score (1º argumento do par)
-    % @>= significa ordem decrescente (maior score primeiro)
     sort(1, @>=, TodosCandidatos, CandidatosOrdenados),
     
     % Extrai apenas os dados do jogo, descartando o score auxiliar
@@ -54,9 +51,7 @@ recomendar_top_5(CatsDesejadas, PrecoMin, PrecoMax, Top5Jogos) :-
     % Pega os 5 primeiros
     pegar_primeiros(5, ItensLimpos, Top5Jogos).
 
-% ==============================================================================
 % AUXILIARES
-% ==============================================================================
 
 % Calcula quantos elementos de Lista1 estão presentes em Lista2
 calcular_interseccao(Lista1, Lista2, Tamanho) :-

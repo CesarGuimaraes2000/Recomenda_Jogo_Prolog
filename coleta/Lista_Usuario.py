@@ -13,7 +13,6 @@ OUTPUT_FILE = os.path.join(DIR_BASE, "biblioteca.pl")
 os.makedirs(DIR_BASE, exist_ok=True)
 
 def load_api_key():
-    """Carrega APENAS a API KEY do json, pois o ID vem do App"""
     if not os.path.exists(CONFIG_FILE):
         print(f"ERRO: Arquivo '{CONFIG_FILE}' não encontrado na raiz.")
         return None
@@ -32,11 +31,6 @@ def clean_string(s):
     return f"'{cleaned}'"
 
 def get_library_data_fast(api_key, steam_id):
-    """
-    Busca a biblioteca completa em UMA única requisição.
-    include_appinfo=1 retorna o nome junto com o ID.
-    Extremamente rápido.
-    """
     url = f"http://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/?key={api_key}&steamid={steam_id}&format=json&include_appinfo=1"
     try:
         res = requests.get(url, timeout=10)
@@ -57,9 +51,6 @@ def get_library_data_fast(api_key, steam_id):
     return None
 
 def testar_conexao(steam_id):
-    """
-    Função rápida chamada pelo botão de teste no Streamlit.
-    """
     api_key = load_api_key()
     if not api_key:
         return False, "Erro: key.json não configurado."
@@ -73,9 +64,6 @@ def testar_conexao(steam_id):
     return True, f"Sucesso! {count} itens encontrados."
 
 def gerar_arquivo_biblioteca(steam_id, progress_callback=None):
-    """
-    Gera o arquivo .pl instantaneamente usando a lista rápida.
-    """
     api_key = load_api_key()
     games = get_library_data_fast(api_key, steam_id)
     
@@ -112,6 +100,3 @@ def gerar_arquivo_biblioteca(steam_id, progress_callback=None):
     except Exception as e:
         print(f"Erro ao salvar arquivo: {e}")
         return False
-
-if __name__ == "__main__":
-    print("Este script agora é um módulo. Execute app.py.")
